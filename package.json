@@ -1,0 +1,35 @@
+{
+  "name": "shadow-fleet-monitor",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "import:cables": "node scripts/import_cables.js",
+    "ingest:data": "node -r dotenv/config scripts/ingest_data.js",
+    "ingest:watchlist": "node -r dotenv/config scripts/ingest_watchlist.js",
+    "stream:ais": "node -r dotenv/config scripts/ais_stream.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^17.2.3",
+    "leaflet": "^1.9.4",
+    "papaparse": "^5.5.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-leaflet": "^4.2.1",
+    "react-leaflet-cluster": "^4.0.0",
+    "shpjs": "^6.2.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "wellknown": "^0.5.0",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.0.0"
+  }
+}

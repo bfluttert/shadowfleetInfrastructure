@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+  --glass-bg: rgba(30, 30, 30, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --accent-color: #007aff;
+  /* iOS Blue */
+  --text-primary: #ffffff;
+  --text-secondary: #aaaaaa;
+  --shadow-lg: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #1a1a1a;
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow: hidden;
+  /* Prevent scroll */
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+}
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+  border-radius: 12px;
+}
+
+
+/* Custom Cluster Icon */
+.custom-cluster-icon {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: rgba(0, 122, 255, 0.3);
+  /* More translucent */
+  backdrop-filter: blur(4px);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s;
+}
+
+.custom-cluster-icon:hover {
+  transform: scale(1.15);
+  background: rgba(0, 122, 255, 0.7);
+  z-index: 1000;
+}
+
+/* Custom Marker Styling for Zoom Levels */
+
+
+/* Default size (large for high zoom) */
+.map-icon-marker {
+  transition: transform 0.3s ease;
+  transform-origin: center center;
+}
+
+/* When map has class 'zoom-low', scale down */
+.map-zoom-low .map-icon-marker {
+  transform: scale(0.4) !important;
+  opacity: 0.8;
+}
+
+/* When map has class 'zoom-mid', scale mid */
+.map-zoom-mid .map-icon-marker {
+  transform: scale(0.7) !important;
+}
+
+/* Hide labels/text at low zoom if any */
+.map-zoom-low .leaflet-popup-content {
+  font-size: 10px;
+}
