@@ -23,3 +23,18 @@ create policy "Public Read Watchlist"
 on watch_list for select
 to anon, authenticated
 using (true);
+
+-- Policy 4: Allow Read/Write access to vessels for Trust-Verify backend
+alter table vessels enable row level security;
+
+drop policy if exists "Public Read Vessels" on vessels;
+create policy "Public Read Vessels"
+on vessels for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Service Write Vessels" on vessels;
+create policy "Service Write Vessels"
+on vessels for update
+to service_role, authenticated
+using (true);
