@@ -44,151 +44,126 @@ const InfrastructureLayer = ({ visibility }) => {
         }
     })
 
-    useEffect(() => {
-        if (!supabase) return
+    // Track which layers have been fetched to prevent double-loading
+    const [fetchedTypes, setFetchedTypes] = useState(new Set())
 
-        // TOGGLE THIS TO TRUE TO RELOAD DATA
-        const ENABLE_FETCH = true
+    const fetchLayer = async (type, setter, label, limit = null) => {
+        if (fetchedTypes.has(type)) return // Guard
+        setFetchedTypes(prev => {
+            const next = new Set(prev)
+            next.add(type)
+            return next
+        })
 
-        if (!ENABLE_FETCH) {
-            console.log("Data fetching disabled for UI development.")
-            return
-        }
+        let allData = []
+        let from = 0
+        const size = 500
+        let more = true
 
-        const fetchData = async () => {
-            // Helper to fetch using pagination to bypass 1000 row limit
-            const fetchLayer = async (type, setter, label, limit = null) => {
-                let allData = []
-                let from = 0
-                const size = 500 // Reduced from 1000 to prevent 500 errors on heavy geometries
-                let more = true
+        try {
+            while (more) {
+                const query = supabase
+                    .from('infrastructure_layers')
+                    .select('*, geom_geojson')
+                    .eq('type', type)
+                    .range(from, from + size - 1)
 
-                while (more) {
-                    const query = supabase
-                        .from('infrastructure_layers')
-                        .select('*, geom_geojson')
-                        .eq('type', type)
-                        .range(from, from + size - 1)
-
-                    if (limit && limit < size) {
-                        query.range(0, limit - 1)
-                        more = false
-                    }
-
-                    const { data, error } = await query
-                    if (error) {
-                        console.error("Error fetching layer:", type, error)
-                        break
-                    }
-
-                    if (data) {
-                        allData = [...allData, ...data]
-                        if (data.length < size) {
-                            more = false
-                        } else {
-                            from += size
-                        }
-                    } else {
-                        more = false
-                    }
-
-                    if (allData.length > 50000) more = false
+                if (limit && limit < size) {
+                    query.range(0, limit - 1)
+                    more = false
                 }
 
-                if (allData.length > 0) {
-                    console.log(`Loaded ${label}: ${allData.length} features`)
-                    setter({
-                        type: "FeatureCollection",
-                        features: allData.map(d => {
-                            const attr = d.attributes || {}
-
-                            let content = ''
-                            const row = (Label, Value) => `<div><b>${Label}:</b> ${Value || 'N/A'}</div>`
-
-                            switch (d.type) {
-                                case 'gas_pipeline':
-                                    content = [
-                                        row('Name', d.name),
-                                        row('ID', d.id),
-                                        row('Status', d.status),
-                                        row('Medium', d.medium),
-                                        row('Country', d.country)
-                                    ].join('')
-                                    break;
-                                case 'platform':
-                                    content = [
-                                        row('Name', d.name),
-                                        row('Function', attr.FUNCTION),
-                                        row('Operator', attr.OPERATOR),
-                                        row('Primary Prod', attr.PRIM_PROD),
-                                        row('Status', d.status),
-                                        row('Country', d.country)
-                                    ].join('')
-                                    break;
-                                case 'nuclear_plant':
-                                    content = [
-                                        row('Name', d.name),
-                                        row('Reactors', attr.Reactors_N),
-                                        row('Thermal Cap', attr.The_Cap_MW),
-                                        row('Net Cap', attr.Net_Cap_MW),
-                                        row('Status', d.status),
-                                        row('Country', attr.Country || d.country)
-                                    ].join('')
-                                    break;
-                                case 'military_area':
-                                    content = [
-                                        row('Name', d.name),
-                                        row('Type', attr.TYPE_1), // Fixed Attribute
-                                        row('Status', d.status),
-                                        row('Country', d.country)
-                                    ].join('')
-                                    break;
-                                case 'port':
-                                    content = [
-                                        row('Port Name', attr.PORT_NAME || d.name),
-                                        row('Port ID', attr.PORT_ID),
-                                        row('Country Code', attr.CNTR_CODE)
-                                    ].join('')
-                                    break;
-                                case 'wind_farm':
-                                    content = [
-                                        row('Name', d.name),
-                                        row('Turbines', attr.N_TURBINES),
-                                        row('Power (MW)', attr.POWER_MW),
-                                        row('Status', d.status),
-                                        row('Country', d.country)
-                                    ].join('')
-                                    break;
-                                default:
-                                    content = row('Name', d.name)
-                            }
-
-                            const finalHtml = `<div style="font-family:sans-serif; font-size:12px; min-width:150px;">${content}</div>`
-
-                            return {
-                                type: "Feature",
-                                properties: { ...d, popupContent: finalHtml },
-                                geometry: d.geom_geojson
-                            }
-                        })
+                const { data, error } = await query
+                if (error) {
+                    console.error("Error fetching layer:", type, error)
+                    setFetchedTypes(prev => {
+                        const next = new Set(prev)
+                        next.delete(type)
+                        return next
                     })
+                    break
                 }
+
+                if (data) {
+                    allData = [...allData, ...data]
+                    if (data.length < size) {
+                        more = false
+                    } else {
+                        from += size
+                    }
+                } else {
+                    more = false
+                }
+
+                if (allData.length > 50000) more = false
             }
 
-            // Fetch separate cable types
-            await fetchLayer('power_cable', setPowerCables, 'Power Cable')
-            await fetchLayer('telecom_cable', setTelecomCables, 'Telecom Cable')
-            await fetchLayer('gas_pipeline', setPipelines, 'Pipeline')
+            if (allData.length > 0) {
+                console.log(`Loaded ${label}: ${allData.length} features`)
+                setter({
+                    type: "FeatureCollection",
+                    features: allData.map(d => {
+                        const attr = d.attributes || {}
+                        let content = ''
+                        const row = (Label, Value) => `<div><b>${Label}:</b> ${Value || 'N/A'}</div>`
 
-            await fetchLayer('wind_farm', setWindFarms, 'Wind Farm')
-            await fetchLayer('nuclear_plant', setNuclear, 'Nuclear Plant')
-            await fetchLayer('port', setPorts, 'Port')
-            await fetchLayer('military_area', setMilitary, 'Military Area')
-            await fetchLayer('platform', setPlatforms, 'Offshore Platform')
+                        switch (d.type) {
+                            case 'gas_pipeline':
+                                content = [row('Name', d.name), row('ID', d.id), row('Status', d.status), row('Medium', d.medium), row('Country', d.country)].join('')
+                                break;
+                            case 'platform':
+                                content = [row('Name', d.name), row('Function', attr.FUNCTION), row('Operator', attr.OPERATOR), row('Primary Prod', attr.PRIM_PROD), row('Status', d.status), row('Country', d.country)].join('')
+                                break;
+                            case 'nuclear_plant':
+                                content = [row('Name', d.name), row('Reactors', attr.Reactors_N), row('Thermal Cap', attr.The_Cap_MW), row('Net Cap', attr.Net_Cap_MW), row('Status', d.status), row('Country', attr.Country || d.country)].join('')
+                                break;
+                            case 'military_area':
+                                content = [row('Name', d.name), row('Type', attr.TYPE_1), row('Status', d.status), row('Country', d.country)].join('')
+                                break;
+                            case 'port':
+                                content = [row('Port Name', attr.PORT_NAME || d.name), row('Port ID', attr.PORT_ID), row('Country Code', attr.CNTR_CODE)].join('')
+                                break;
+                            case 'wind_farm':
+                                content = [row('Name', d.name), row('Turbines', attr.N_TURBINES), row('Power (MW)', attr.POWER_MW), row('Status', d.status), row('Country', d.country)].join('')
+                                break;
+                            default:
+                                content = row('Name', d.name)
+                        }
+
+                        const finalHtml = `<div style="font-family:sans-serif; font-size:12px; min-width:150px;">${content}</div>`
+                        return {
+                            type: "Feature",
+                            properties: { ...d, popupContent: finalHtml },
+                            geometry: d.geom_geojson
+                        }
+                    })
+                })
+            }
+        } catch (e) {
+            console.error("Fetch implementation error", e)
         }
+    }
 
-        fetchData()
+    // Effect for base data (fast)
+    useEffect(() => {
+        if (!supabase) return
+        fetchLayer('wind_farm', setWindFarms, 'Wind Farm')
+        fetchLayer('nuclear_plant', setNuclear, 'Nuclear Plant')
+        fetchLayer('port', setPorts, 'Port')
+        fetchLayer('military_area', setMilitary, 'Military Area')
+        fetchLayer('platform', setPlatforms, 'Offshore Platform')
     }, [])
+
+    // Effect for heavy data (zoom-dependent)
+    useEffect(() => {
+        if (!supabase) return
+        if (zoom > 6) {
+            fetchLayer('power_cable', setPowerCables, 'Power Cable')
+            fetchLayer('telecom_cable', setTelecomCables, 'Telecom Cable')
+            fetchLayer('gas_pipeline', setPipelines, 'Pipeline')
+        }
+    }, [zoom])
+
 
     const powerCableStyle = { color: "#FF00FF", weight: 3, opacity: 1 } // Magenta DEBUG style
     const telecomCableStyle = { color: "#1E90FF", weight: 2, opacity: 0.8 }

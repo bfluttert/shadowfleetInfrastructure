@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Map from './components/Map'
 import SearchOverlay from './components/SearchOverlay'
+import Legend from './components/Legend'
 import { ShipProvider, useShips } from './context/ShipContext'
 
 function Dashboard() {
@@ -8,15 +9,19 @@ function Dashboard() {
     const { shipsRef } = useShips()
     const [showShips, setShowShips] = useState(true)
 
-    const handleSelectVessel = (csvVessel) => {
-        // Validation: Check if the vessel is currently being tracked
+    const handleSelectVessel = (vessel) => {
+        // If the 'vessel' already has lat/lon (passed from map click), just set it.
+        // If it's from the search (CSV), find it in live data.
+        if (vessel.lat && vessel.lon) {
+            setSelectedVessel(vessel)
+            return
+        }
+
         let found = null
-        const qName = csvVessel.name.toLowerCase()
+        const qName = vessel.name.toLowerCase()
 
         if (shipsRef.current) {
             for (const [mmsi, ship] of shipsRef.current) {
-                // Check fuzzy name match or verification
-                // Note: ship.name comes from AIS or our enriched map
                 if (ship.name && ship.name.toLowerCase() === qName) {
                     found = ship
                     break
@@ -27,8 +32,8 @@ function Dashboard() {
         if (found) {
             setSelectedVessel(found)
         } else {
-            console.warn("Vessel not found in live stream:", csvVessel.name)
-            alert(`Vessel "${csvVessel.name}" is not currently detected in the live stream.`)
+            console.warn("Vessel not found in live stream:", vessel.name)
+            alert(`Vessel "${vessel.name}" is not currently detected in the live stream.`)
         }
     }
 
@@ -37,6 +42,8 @@ function Dashboard() {
             <SearchOverlay
                 onSelect={handleSelectVessel}
                 onToggleAll={setShowShips}
+                selectedVessel={selectedVessel}
+                onClearSelection={() => setSelectedVessel(null)}
             />
             <Map
                 shipsRef={shipsRef}
@@ -44,6 +51,7 @@ function Dashboard() {
                 selectedVessel={selectedVessel}
                 onSelectShip={handleSelectVessel}
             />
+            <Legend />
         </div>
     )
 }

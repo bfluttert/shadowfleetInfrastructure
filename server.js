@@ -10,12 +10,17 @@ const io = new Server(PORT, {
     cors: { origin: "*" }
 });
 
-const AIS_KEY = process.env.AIS_KEY;
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const AIS_KEY = process.env.AIS_KEY || process.env.AISSTREAM_API_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_KEY;
 
 if (!AIS_KEY || !SUPABASE_URL || !SUPABASE_KEY) {
-    console.error("Error: Missing keys in .env (AIS_KEY, SUPABASE_URL, SUPABASE_KEY)");
+    const missing = [];
+    if (!AIS_KEY) missing.push("AIS_KEY (or AISSTREAM_API_KEY)");
+    if (!SUPABASE_URL) missing.push("SUPABASE_URL (or VITE_SUPABASE_URL)");
+    if (!SUPABASE_KEY) missing.push("SUPABASE_KEY (or SUPABASE_SERVICE_KEY/VITE_SUPABASE_KEY)");
+
+    console.error(`Error: Missing keys in .env: ${missing.join(', ')}`);
     process.exit(1);
 }
 

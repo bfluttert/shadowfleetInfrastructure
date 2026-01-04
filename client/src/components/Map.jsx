@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, ZoomControl, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, ZoomControl, useMap, WMSTileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import InfrastructureLayer from './InfrastructureLayer'
 import ShipLayer from './ShipLayer'
@@ -25,7 +25,8 @@ const Map = ({ shipsRef, showShips, selectedVessel, onSelectShip }) => {
         nuclear_plant: true,
         port: true,
         platform: true,
-        military_area: true
+        military_area: true,
+        eez: false
     })
 
     const toggleLayer = (key) => {
@@ -48,6 +49,17 @@ const Map = ({ shipsRef, showShips, selectedVessel, onSelectShip }) => {
                     url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
                 />
+
+                {visibility.eez && (
+                    <WMSTileLayer
+                        url="https://geo.vliz.be/geoserver/MarineRegions/wms"
+                        layers="MarineRegions:eez"
+                        format="image/png"
+                        transparent={true}
+                        attribution='&copy; <a href="https://www.marineregions.org/">Marine Regions</a>'
+                        opacity={0.1}
+                    />
+                )}
 
                 <InfrastructureLayer visibility={visibility} />
 

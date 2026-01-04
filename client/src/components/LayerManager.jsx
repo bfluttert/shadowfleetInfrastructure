@@ -7,7 +7,8 @@ const LayerManager = ({ visibility, onToggle }) => {
         'Energy': ['power_cable', 'wind_farm', 'nuclear_plant', 'platform'],
         'Transport': ['gas_pipeline', 'port'],
         'Telecom': ['telecom_cable'],
-        'Restricted': ['military_area']
+        'Restricted': ['military_area'],
+        'Maritime': ['eez']
     }
 
     const labels = {
@@ -18,7 +19,8 @@ const LayerManager = ({ visibility, onToggle }) => {
         'gas_pipeline': 'Gas/Oil Pipelines',
         'port': 'Ports',
         'telecom_cable': 'Telecom Cables',
-        'military_area': 'Military Areas'
+        'military_area': 'Military Areas',
+        'eez': 'Exclusive Econ. Zones'
     }
 
     return (

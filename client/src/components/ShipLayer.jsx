@@ -143,44 +143,39 @@ const ShipLayer = ({ shipsRef, onSelect }) => {
         renderFixed()
 
         // Interaction (Hover)
-        // We attach listener to canvas
+        // We attach listener to the Map instead of canvas to avoid pointer-events issues
+        // and allow map dragging to work simultaneously.
         const onMouseMove = (e) => {
-            const rect = canvas.getBoundingClientRect()
-            const x = e.clientX - rect.left
-            const y = e.clientY - rect.top
+            const { x, y } = e.containerPoint
+            const container = map.getContainer()
 
-            // Simple hit test
-            // Iterate all ships? (Optimization: use a spatial grid if too slow, but for <2000 ships it's fine)
             let found = null
             for (const [mmsi, ship] of shipsRef.current) {
                 const p = map.latLngToContainerPoint([ship.lat, ship.lon])
                 const dist = Math.sqrt((p.x - x) ** 2 + (p.y - y) ** 2)
-                if (dist < 10) { // 10px radius
+                if (dist < 10) {
                     found = ship
                     break
                 }
             }
 
             if (found) {
-                canvas.style.cursor = 'pointer'
-                canvas.title = `${found.name} (${found.mmsi})` // Native tooltip for simplicity
+                container.style.cursor = 'pointer'
+                // We can't use canvas.title if pointer-events is none, 
+                // but we could use a custom tooltip if needed. 
+                // For now, just cursor change is enough confirmation.
             } else {
-                canvas.style.cursor = 'default'
-                canvas.title = ''
+                container.style.cursor = ''
             }
         }
-        canvas.addEventListener('mousemove', onMouseMove)
+        map.on('mousemove', onMouseMove)
 
 
         // Click Listener
         const onClick = (e) => {
-            const rect = canvas.getBoundingClientRect()
-            const x = e.clientX - rect.left
-            const y = e.clientY - rect.top
+            const { x, y } = e.containerPoint
 
             let found = null
-            // Check top-most ship first? Map order is insertion order usually.
-            // Reverse iteration might be better for "top" z-index visually.
             for (const [mmsi, ship] of shipsRef.current) {
                 const p = map.latLngToContainerPoint([ship.lat, ship.lon])
                 const dist = Math.sqrt((p.x - x) ** 2 + (p.y - y) ** 2)
@@ -194,13 +189,13 @@ const ShipLayer = ({ shipsRef, onSelect }) => {
                 onSelect(found)
             }
         }
-        canvas.addEventListener('click', onClick)
+        map.on('click', onClick)
 
         return () => {
             cancelAnimationFrame(animationFrameId)
             map.off('resize', resize)
-            canvas.removeEventListener('mousemove', onMouseMove)
-            canvas.removeEventListener('click', onClick)
+            map.off('mousemove', onMouseMove)
+            map.off('click', onClick)
             canvas.remove()
         }
     }, [map, shipsRef, onSelect])
