@@ -74,7 +74,7 @@ const SearchOverlay = ({ onSelect, onToggleAll, selectedVessel, onClearSelection
                 <div style={{ position: 'relative', flex: 1 }}>
                     <input
                         type="text"
-                        placeholder="Search Name or IMO..."
+                        placeholder="Search Vessel Name, MMSI, or IMO..."
                         value={query}
                         onChange={e => { setQuery(e.target.value); setShowSuggestions(true); }}
                         onFocus={(e) => {

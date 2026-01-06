@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css'
 import InfrastructureLayer from './InfrastructureLayer'
 import ShipLayer from './ShipLayer'
 import LayerManager from './LayerManager'
+import DistanceScale from './DistanceScale'
 
 const MapController = ({ selectedVessel }) => {
     const map = useMap()
@@ -67,6 +68,8 @@ const Map = ({ shipsRef, showShips, selectedVessel, onSelectShip }) => {
                 {showShips && <ShipLayer shipsRef={shipsRef} onSelect={onSelectShip} />}
 
                 <MapController selectedVessel={selectedVessel} />
+
+                <DistanceScale />
             </MapContainer>
         </>
     )
